@@ -29,8 +29,10 @@ imagesc(S_AR1_r_0_9)
 title('S_AR1_r_0_9')
 
 %% setup FBM covariance matrices
-
-FBM_matrix = @(h, S_i_j_diffs) 0.5*((S_i_j_diffs + 1).^(2*h) - 2*(S_i_j_diffs.^(2*h)) + (S_i_j_diffs - 1).^(2*h));
+% Note: definition in paper is wrong! 
+% See MATLAB code example here for a proper implementation https://se.mathworks.com/matlabcentral/fileexchange/19797-simulation-of-fractional-gaussian-noise--exact-
+% See this paper for a correct definition: https://arxiv.org/pdf/1709.06115.pdf
+FBM_matrix = @(h, S_i_j_diffs) 0.5*(abs(S_i_j_diffs + 1).^(2*h) - 2*(S_i_j_diffs.^(2*h)) + abs(S_i_j_diffs - 1).^(2*h));
 
 S_FBM_h_0_6 = FBM_matrix(0.6, S_i_j_diffs);
 figure
