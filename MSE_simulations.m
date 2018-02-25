@@ -51,64 +51,92 @@ title('S_FBM_h_0_8')
 
 %% Create samples for testing AR(1) covariance matrix
 
-iters = 10
+tst_cov_mats = {S_AR1_r_0_1, S_AR1_r_0_5, S_AR1_r_0_9, S_FBM_h_0_6, S_FBM_h_0_7, S_FBM_h_0_8}
+iters = 10;
 ns = 6:2:30;
 
-avg_rho_LWs = zeros(length(ns),1);
-avg_rho_RBLWs = zeros(length(ns),1);
-avg_rho_OASs = zeros(length(ns),1);
+avg_rho_LWs = zeros(length(tst_cov_mats), length(ns),1);
+avg_rho_RBLWs = zeros(length(tst_cov_mats), length(ns),1);
+avg_rho_OASs = zeros(length(tst_cov_mats), length(ns),1);
 
-avg_MSE_LWs = zeros(length(ns), 1);
-avg_MSE_RBLWs = zeros(length(ns), 1);
-avg_MSE_OASs = zeros(length(ns), 1);
+avg_MSE_LWs = zeros(length(tst_cov_mats), length(ns), 1);
+avg_MSE_RBLWs = zeros(length(tst_cov_mats), length(ns), 1);
+avg_MSE_OASs = zeros(length(tst_cov_mats), length(ns), 1);
 
-for n = ns
-    sum_rhos_LW = 0;
-    sum_rhos_RBLW = 0;
-    sum_rhos_OAS = 0;
-    
-    sum_MSEs_LW = 0;
-    sum_MSEs_RBLW = 0;
-    sum_MSEs_OAS = 0;
-    
-    for i = 1:iters
-        % Create n samples
-        X = mvnrnd(zeros(p,1), S_AR1_r_0_1, n);
-        
-        % Approximate covariance matrix using LW, RBLW, OAS and true oracle
-        S_hat = cov(X);
-        F_hat = (trace(S_hat) / p) * eye(p);
-        
-        sum_sq_fro_diffs = 0;
-        for j=1:n
-            sum_sq_fro_diffs = sum_sq_fro_diffs + norm(X(j,:)'*X(j,:) - S_hat, 'fro')^2;
-        end
-        rho_LW =  min(1, sum_sq_fro_diffs / (n^2*(trace(S_hat^2) - (trace(S_hat)^2/p))));
-        rho_RBLW = min(1,(((n-2)/n) * trace(S_hat^2) + trace(S_hat)^2) / ((n+2)*(trace(S_hat^2) - (trace(S_hat)^2/p))));
-        rho_OAS = min(1, (((1-2)/p)*trace(S_hat^2) + trace(S_hat)^2) / (((n+1-2)/p)*(trace(S_hat^2) - trace(S_hat)^2/p)));
+for tst_mat_i = 1:length(tst_cov_mats)
+    for n = ns
+        fprintf(2,'Evaluating for n=%d \n',n);
+        sum_rhos_LW = 0;
+        sum_rhos_RBLW = 0;
+        sum_rhos_OAS = 0;
 
-        sum_rhos_LW = sum_rhos_LW + rho_LW;
-        sum_rhos_RBLW = sum_rhos_RBLW + rho_RBLW;
-        sum_rhos_OAS = sum_rhos_OAS + rho_OAS;
-        
-        S_hat_LW = (1-rho_LW)*S_hat + rho_LW * F_hat;
-        S_hat_RBLW = (1-rho_RBLW)*S_hat + rho_RBLW * F_hat;
-        S_hat_OAS = (1-rho_OAS)*S_hat + rho_OAS * F_hat;
-        
-        % Record MSE
-        LW_Fro_sq_sum = 0;
-        RBLW_Fro_sq_sum = 0;
-        OAS_Fro_sq_sum = 0;
-        for j=1:n
-            LW_Fro_sq_sum = LW_Fro_sq_sum + norm(S_hat_LW - S_AR1_r_0_1, 'fro')^2;
-            RBLW_Fro_sq_sum = RBLW_Fro_sq_sum + norm(S_hat_RBLW - S_AR1_r_0_1, 'fro')^2;
-            OAS_Fro_sq_sum = OAS_Fro_sq_sum + norm(S_hat_OAS - S_AR1_r_0_1, 'fro')^2;
-        end
-        sum_MSEs_LW = LW_Fro_sq_sum / n;
-        sum_MSEs_RBLW = RBLW_Fro_sq_sum / n;
-        sum_MSEs_OAS = OAS_Fro_sq_sum / n;
+        sum_MSEs_LW = 0;
+        sum_MSEs_RBLW = 0;
+        sum_MSEs_OAS = 0;
+
+        for i = 1:iters
+            % Create n samples using chosen covariance matrix
+            X = mvnrnd(zeros(p,1), tst_cov_mats{tst_mat_i}, n);
+
+            % Approximate covariance matrix using LW, RBLW, OAS and true oracle
+            S_hat = cov(X,1);
+            F_hat = (trace(S_hat) / p) * eye(p);
+
+            sum_sq_fro_diffs = 0;
+            for j=1:n
+                sum_sq_fro_diffs = sum_sq_fro_diffs + norm(X(j,:)'*X(j,:) - S_hat, 'fro')^2;
+            end
+            rho_LW =  min(1, sum_sq_fro_diffs / (n^2*(trace(S_hat^2) - (trace(S_hat)^2/p))));
+            rho_RBLW = min(1,(((n-2)/n) * trace(S_hat^2) + trace(S_hat)^2) / ((n+2)*(trace(S_hat^2) - (trace(S_hat)^2/p))));
+            
+            % Equation 23 is incorrect! Check equation 25 for the correct
+            % formulation!
+            OAS_numer = trace(S_hat^2) + ((1-2)/p)*trace(S_hat)^2;
+            OAS_denom = ((n+1-2)/p)*(trace(S_hat^2) - ((trace(S_hat)^2)/p));
+            rho_OAS = min(1, OAS_numer / OAS_denom);
+
+            S_hat_LW = (1-rho_LW)*S_hat + rho_LW * F_hat;
+            S_hat_RBLW = (1-rho_RBLW)*S_hat + rho_RBLW * F_hat;
+            S_hat_OAS = (1-rho_OAS)*S_hat + rho_OAS * F_hat;
+
+            % Record MSE
+            LW_Fro_sq_sum = 0;
+            RBLW_Fro_sq_sum = 0;
+            OAS_Fro_sq_sum = 0;
+            for j=1:n
+                LW_Fro_sq_sum = LW_Fro_sq_sum + norm(S_hat_LW - S_AR1_r_0_1, 'fro')^2;
+                RBLW_Fro_sq_sum = RBLW_Fro_sq_sum + norm(S_hat_RBLW - S_AR1_r_0_1, 'fro')^2;
+                OAS_Fro_sq_sum = OAS_Fro_sq_sum + norm(S_hat_OAS - S_AR1_r_0_1, 'fro')^2;
+            end
+            sum_MSEs_LW = LW_Fro_sq_sum / n;
+            sum_MSEs_RBLW = RBLW_Fro_sq_sum / n;
+            sum_MSEs_OAS = OAS_Fro_sq_sum / n;
+
+            % Track rho values
+            sum_rhos_LW = sum_rhos_LW + rho_LW;
+            sum_rhos_RBLW = sum_rhos_RBLW + rho_RBLW;
+            sum_rhos_OAS = sum_rhos_OAS + rho_OAS;
+        end % Repeat 'iter' times
+        % Record average rho values and MSEs
+        i_n = find(ns == n);
+        avg_rho_LWs(tst_mat_i,i_n,:) = sum_rhos_LW / iters;
+        avg_rho_RBLWs(tst_mat_i,i_n,:) = sum_rhos_RBLW / iters;
+        avg_rho_OASs(tst_mat_i,i_n,:) = sum_rhos_OAS / iters;
+
+        avg_MSE_LWs(tst_mat_i,i_n,:) = sum_MSEs_LW / iters;
+        avg_MSE_RBLWs(tst_mat_i,i_n,:) = sum_MSEs_RBLW / iters;
+        avg_MSE_OASs(tst_mat_i,i_n,:) = sum_MSEs_OAS / iters;
     end
-% Repeat 'iter' times
+    figure
+    hold on
+    plot(avg_rho_LWs(tst_mat_i,:,:))
+    plot(avg_rho_RBLWs(tst_mat_i,:,:))
+    plot(avg_rho_OASs(tst_mat_i,:,:))
+    title(['Covariance ', num2str(tst_mat_i)])
+    hold off
 end
+
+
+
 
 % delete(findall(0,'Type','figure'))
