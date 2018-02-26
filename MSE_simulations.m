@@ -52,6 +52,7 @@ title('S_FBM_h_0_8')
 %% Create samples for testing AR(1) covariance matrix
 
 tst_cov_mats = {S_AR1_r_0_1, S_AR1_r_0_5, S_AR1_r_0_9, S_FBM_h_0_6, S_FBM_h_0_7, S_FBM_h_0_8}
+tst_cov_mat_names = {'S_AR1_r_0_1', 'S_AR1_r_0_5', 'S_AR1_r_0_9', 'S_FBM_h_0_6', 'S_FBM_h_0_7', 'S_FBM_h_0_8'}
 iters = 10;
 ns = 6:2:30;
 
@@ -67,7 +68,7 @@ avg_MSE_Ora = zeros(length(tst_cov_mats), length(ns), 1);
 
 for tst_mat_i = 1:length(tst_cov_mats)
     for n = ns
-        fprintf(2,'Evaluating for n=%d \n',n);
+        fprintf(2,'Evaluating covariance matrix %s with n=%d \n',tst_cov_mat_names{tst_mat_i},n);
         sum_rhos_LW = 0;
         sum_rhos_RBLW = 0;
         sum_rhos_OAS = 0;
@@ -102,8 +103,8 @@ for tst_mat_i = 1:length(tst_cov_mats)
             
             % Equation 23 is incorrect! Check equation 25 for the correct
             % formulation!
-            OAS_numer = trace(S_hat^2) + ((1-2)/p)*trace(S_hat)^2;
-            OAS_denom = ((n+1-2)/p)*(trace(S_hat^2) - ((trace(S_hat)^2)/p));
+            OAS_numer = (1-2/p)*trace(S_hat^2) + trace(S_hat)^2;
+            OAS_denom = (n+1-2/p)*(trace(S_hat^2) - ((trace(S_hat)^2)/p));
             rho_OAS = min(1, OAS_numer / OAS_denom);
             
             Ora_numer = (1 - 2/p)*trace(TrueCov^2) + trace(TrueCov)^2;
@@ -145,12 +146,9 @@ for tst_mat_i = 1:length(tst_cov_mats)
     plot(avg_rho_RBLWs(tst_mat_i,:,:))
     plot(avg_rho_OASs(tst_mat_i,:,:))
     plot(avg_rho_Ora(tst_mat_i,:,:))
-    title(['Covariance ', num2str(tst_mat_i)])
+    title(['Covariance ', tst_cov_mat_names{tst_mat_i} ])
     legend('LW', 'RBLW', 'OAS', 'Oracle');
     hold off
 end
-
-
-
 
 % delete(findall(0,'Type','figure'))
