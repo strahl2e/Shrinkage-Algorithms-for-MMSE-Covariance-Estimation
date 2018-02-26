@@ -84,7 +84,13 @@ for tst_mat_i = 1:length(tst_cov_mats)
             X = mvnrnd(zeros(p,1), TrueCov, n);
 
             % Approximate covariance matrix using LW, RBLW, OAS and true oracle
-            S_hat = cov(X,1);
+            % S_hat = cov(X,1); MATLAB removes column means!
+            S_hat = zeros(p,p);
+            for j=1:n
+                S_hat = S_hat + X(j,:)' * X(j,:);
+            end
+            S_hat = S_hat ./ n;
+            
             F_hat = (trace(S_hat) / p) * eye(p);
 
             sum_sq_fro_diffs = 0;
