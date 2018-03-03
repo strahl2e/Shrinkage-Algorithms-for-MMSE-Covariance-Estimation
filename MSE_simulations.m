@@ -52,8 +52,9 @@ title('S_FBM_h_0_8')
 %% Create samples for testing AR(1) covariance matrix
 
 tst_cov_mats = {S_AR1_r_0_1, S_AR1_r_0_5, S_AR1_r_0_9, S_FBM_h_0_6, S_FBM_h_0_7, S_FBM_h_0_8}
-tst_cov_mat_names = {'S_AR1_r_0_1', 'S_AR1_r_0_5', 'S_AR1_r_0_9', 'S_FBM_h_0_6', 'S_FBM_h_0_7', 'S_FBM_h_0_8'}
-iters = 10;
+tst_cov_mat_names = {'S_{AR1} r = 0.1', 'S_{AR1} r=0.5', 'S_{AR1} r = 0.9', 'S_{FBM} h = 0.6', 'S_{FBM} h = 0.7', 'S_{FBM} h = 0.8'}
+tst_cov_mat_filenames = {'S_AR1_r_0_1', 'S_AR1_r_0_5', 'S_AR1_r_0_9', 'S_FBM_h_0_6', 'S_FBM_h_0_7', 'S_FBM_h_0_8'}
+iters = 5000;
 ns = 6:2:30;
 
 avg_rho_LWs = zeros(length(tst_cov_mats), length(ns),1);
@@ -80,6 +81,9 @@ for tst_mat_i = 1:length(tst_cov_mats)
         sum_MSEs_Ora = 0;
 
         for i = 1:iters
+            if mod(i,500) == 0
+                fprintf(2,'Iteration %d of %d \n', i, iters);
+            end
             % Create n samples using chosen covariance matrix
             TrueCov = tst_cov_mats{tst_mat_i};
             X = mvnrnd(zeros(p,1), TrueCov, n);
@@ -149,6 +153,30 @@ for tst_mat_i = 1:length(tst_cov_mats)
     title(['Covariance ', tst_cov_mat_names{tst_mat_i} ])
     legend('LW', 'RBLW', 'OAS', 'Oracle');
     hold off
+end
+
+for tst_mat_i = 1:length(tst_cov_mats)
+    figure
+    hold on
+    plot(avg_rho_LWs(tst_mat_i,:,:),'-o')
+    plot(avg_rho_RBLWs(tst_mat_i,:,:),'-+')
+    plot(avg_rho_OASs(tst_mat_i,:,:),'-s')
+    plot(avg_rho_Ora(tst_mat_i,:,:),'-d')
+    title(['Values for \rho (Covariance ', tst_cov_mat_names{tst_mat_i}, ')' ])
+    legend('LW', 'RBLW', 'OAS', 'Oracle');
+    hold off
+    print(['RhoValue_', tst_cov_mat_filenames{tst_mat_i}],'-dpng')
+    
+    figure
+    hold on 
+    plot(avg_MSE_LWs(tst_mat_i,:,:),'-o')
+    plot(avg_MSE_RBLWs(tst_mat_i,:,:),'-+')
+    plot(avg_MSE_OASs(tst_mat_i,:,:),'-s')
+    plot(avg_MSE_Ora(tst_mat_i,:,:),'-d')
+    title(['MSE (Covariance ', tst_cov_mat_names{tst_mat_i}, ')' ])
+    legend('LW', 'RBLW', 'OAS', 'Oracle');
+    hold off
+    print(['MSE_', tst_cov_mat_filenames{tst_mat_i}],'-dpng')
 end
 
 % delete(findall(0,'Type','figure'))
