@@ -8,6 +8,8 @@ StockData = hist_stock_data('01012017','01012018','PortManCovShrinkEstTickerSymb
 
 N_S = length(StockData);
 N_t = length(StockData(1).AdjClose);
+
+Cs = zeros(N_t,N_S);
 nrs = zeros(N_t-1,N_S);
 mus = zeros(N_S);
 sds = zeros(N_S);
@@ -18,8 +20,8 @@ for s = 1:N_S
 
     % Daily net return r_{1t} and r_{2t}, r_{pt} =  ( C_{i,t} - C_{i,t-1} ) / C_{i,t-1}
     % Daily log return = log(1 + r_{pt})
-    C = StockData(s).AdjClose;
-    nr = (C(t) ./ C(t_m_1)) - 1;
+    Cs(:,s) = StockData(s).AdjClose;
+    nr = (Cs(t,s) ./ Cs(t_m_1,s)) - 1;
     nrs(:,s) = nr;
     %lr_SP = log(C(t)) - log(C(t_m_1)); %For computational efficiency use log - log
     % Standardised returns: r_tilde_{it} = (r_{it} - mu_tilde_i)/sigma_tilde_i
@@ -33,11 +35,16 @@ start_t = 50;
 t_offset = start_t-1;
 gam = 20;
 T = length(start_t:size(nrs,1));
-ws_t = zeros(T,1);
-wl_t = zeros(T,1);
+ws_t = zeros(T,N_S); % weights
+wl_t = zeros(T,N_S);
+
+Ws_t = zeros(T+1,1); % wealth
+Wl_t = zeros(T+1,1);
+Ws_t(1) = 1; % Start with 1 unit (million euros) of wealth
+Wl_t(1) = 1;
 
 for c_t = start_t:size(nrs,1)
-	% Calculate relevant means
+	% Calculate relevant statistics of net returns
     current_mus = mean(nrs(max(1,c_t-p_s):c_t,:))';
     current_samp_cov = cov(nrs(max(1,c_t-p_s):c_t,:));
     
@@ -46,8 +53,42 @@ for c_t = start_t:size(nrs,1)
     samp_cov_inv = inv(current_samp_cov);
     one_tran_S = ones(N_S,1)'* samp_cov_inv;
     lambda_t = (gam - one_tran_S*current_mus) / (one_tran_S*ones(N_S,1));
-    ws_t(t) = (1/gam)*samp_cov_inv*(current_mus + lambda_t*ones(N_S,1));
-    wl_t(t) = max(min(1,ws_t(t)), 0);
-
+    ws_t(t,:) = (1/gam)*samp_cov_inv*(current_mus + lambda_t*ones(N_S,1));
+    wl_t(t,:) = max(min(1,ws_t(t,:)), 0);
     
+    % Compute wealth for next time step, units of one million.
+    %mil_units = 1000000;
+    ns_t = (ws_t(t,:).*((Ws_t(t)*1000000) * Cs(c_t,:).^-1))'; %Current short investments 
+    nl_t = (wl_t(t,:).*((Wl_t(t)*1000000) * Cs(c_t,:).^-1))'; 
+    
+    
+    Ws_t(t+1) = (ns_t'*Cs(c_t+1,:)')/1000000; %Wealth investing in next time-step
+    Wl_t(t+1) = (nl_t'*Cs(c_t+1,:)')/1000000;
 end
+
+% Plot portfolio weights
+figure
+plot(ws_t(:,1))
+hold on
+plot(wl_t(:,1))
+hold off
+
+% Plot portfolio returns
+ws_t
+nrs
+
+Rs_t = (1-ws_t(1:end-1)).*nr_SP(51:end) + ws_t(1:end-1).*nr_ND(51:end);
+Rl_t = (1-wl_t(1:end-1)).*nr_SP(51:end) + wl_t(1:end-1).*nr_ND(51:end);
+
+mean(Rs_t)
+mean(Rl_t)
+
+plot(Rs_t,'k')
+hold on
+plot(Rl_t,'r')
+hold off
+
+
+
+
+% delete(findall(0,'Type','figure'))

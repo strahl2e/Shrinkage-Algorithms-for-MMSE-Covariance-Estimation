@@ -1,2 +1,2 @@
-^GSPC
 ^NDX
+^GSPC
