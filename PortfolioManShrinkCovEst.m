@@ -74,11 +74,8 @@ plot(wl_t(:,1))
 hold off
 
 % Plot portfolio returns
-ws_t
-nrs
-
-Rs_t = (1-ws_t(1:end-1)).*nr_SP(51:end) + ws_t(1:end-1).*nr_ND(51:end);
-Rl_t = (1-wl_t(1:end-1)).*nr_SP(51:end) + wl_t(1:end-1).*nr_ND(51:end);
+Rs_t = sum(ws_t(1:end-1,:) .* nrs((start_t+1):end,:),2);
+Rl_t = sum(wl_t(1:end-1,:) .* nrs((start_t+1):end,:),2);
 
 mean(Rs_t)
 mean(Rl_t)
@@ -88,7 +85,18 @@ hold on
 plot(Rl_t,'r')
 hold off
 
-
-
+% Wealth process starting with w=1 at t=50 start.
+fig=figure; 
+hax=axes; 
+plot(Ws_t,'k');
+hold on
+plot(Wl_t,'r');
+hold on
+plot(W_SP_t,'b');
+hold on
+plot(W_ND_t,'g');
+hold on
+line([R_t_min_idx+1 R_t_min_idx+1], get(hax,'YLim'), 'Color', [0 1 0], 'LineStyle',':')
+hold off
 
 % delete(findall(0,'Type','figure'))
