@@ -118,14 +118,14 @@ for sc = 1:N_sc
         hold on
         subplot(3,2,plot_num)
         plot(ws_t(:,1,p_s_i,sc))
-        leg_txt{lt_i} = strcat("S, p = ", num2str(p_ss(p_s_i)));
+        leg_txt{lt_i} = strcat("S, n = ", num2str(p_ss(p_s_i)));
         lt_i = lt_i + 1;
     end
     for p_s_i = 1:N_p_s
         hold on
         subplot(3,2,plot_num)
         plot(wl_t(:,1,p_s_i,sc))
-        leg_txt{lt_i} = strcat("L, p = ", num2str(p_ss(p_s_i)));
+        leg_txt{lt_i} = strcat("L, n = ", num2str(p_ss(p_s_i)));
         lt_i = lt_i + 1;
     end
     hold off
@@ -133,55 +133,80 @@ for sc = 1:N_sc
     plot_num = plot_num + 1;
 end
 pw_leg = legend(leg_txt)
+new_pos = [0.95 0.5 0.01 0.01];
+new_units = 'normalized'
+set(pw_leg, 'Position', new_pos, 'Units', new_units)
 
 
 % Plot portfolio returns
-Rs_t = zeros(length(ws_t)-1,N_p_s);
-Rl_t = zeros(length(wl_t)-1,N_p_s);
-for p_s_i = 1:N_p_s
-    Rs_t(:,p_s_i) = sum(ws_t(1:end-1,:,p_s_i) .* nrs((start_t+1):end,:),2);
-    Rl_t(:,p_s_i) = sum(wl_t(1:end-1,:,p_s_i) .* nrs((start_t+1):end,:),2);
+Rs_t = zeros(length(ws_t)-1,N_p_s,N_sc);
+Rl_t = zeros(length(wl_t)-1,N_p_s,N_sc);
+for sc = 1:N_sc
+    for p_s_i = 1:N_p_s
+        Rs_t(:,p_s_i,sc) = sum(ws_t(1:end-1,:,p_s_i,sc) .* nrs((start_t+1):end,:),2);
+        Rl_t(:,p_s_i,sc) = sum(wl_t(1:end-1,:,p_s_i,sc) .* nrs((start_t+1):end,:),2);
+    end
 end
 mean(Rs_t)  
 mean(Rl_t)
+
 figure
-leg_txt = cell(length(p_ss)*2,1);
-lt_i = 1;
-for p_s_i = 1:N_p_s
-    hold on
-    plot(Rs_t(:,p_s_i))
-    leg_txt{lt_i} = strcat('S, p=',num2str(p_ss(p_s_i)));
-    lt_i = lt_i +1;
+plot_num = 1;
+for sc = 1:N_sc
+    leg_txt = cell(length(p_ss)*2,1);
+    lt_i = 1;
+    for p_s_i = 1:N_p_s
+        hold on
+        subplot(3,2,plot_num)
+        plot(Rs_t(:,p_s_i,sc))
+        leg_txt{lt_i} = strcat('S, n=',num2str(p_ss(p_s_i)));
+        lt_i = lt_i +1;
+    end
+    for p_s_i = 1:N_p_s
+        hold on
+        subplot(3,2,plot_num)
+        plot(Rl_t(:,p_s_i,sc))
+        leg_txt{lt_i} = strcat('L, n=',num2str(p_ss(p_s_i)));
+        lt_i = lt_i +1;
+    end
+    hold off
+    title(strcat('Net returns (',sc_names{sc},')'))
+    plot_num = plot_num + 1;
 end
-for p_s_i = 1:N_p_s
-    hold on
-    plot(Rl_t(:,p_s_i))
-    leg_txt{lt_i} = strcat('L, p=',num2str(p_ss(p_s_i)));
-    lt_i = lt_i +1;
-end
-hold off
-title('Returns')
-legend(leg_txt)
+pw_leg = legend(leg_txt)
+new_pos = [0.95 0.5 0.01 0.01];
+new_units = 'normalized'
+set(pw_leg, 'Position', new_pos, 'Units', new_units)
 
 [r c] = find(Rs_t == min(min(Rs_t)))
 
 % Wealth process starting with w=1 at t=50 start.
-fig=figure; 
-leg_txt = cell(length(p_ss)*2,1);
-lt_i = 1;
-for p_s_i = 1:N_p_s
-    hold on
-    plot(Ws_t(:,p_s_i));
-    leg_txt{lt_i} = strcat('S, p=',num2str(p_ss(p_s_i)));
-    lt_i = lt_i +1;
+fig=figure;
+plot_num = 1;
+for sc = 1:N_sc
+    leg_txt = cell(length(p_ss)*2,1);
+    lt_i = 1;
+    for p_s_i = 1:N_p_s
+        hold on
+        subplot(3,2,plot_num)
+        plot(Ws_t(:,p_s_i,sc));
+        leg_txt{lt_i} = strcat('S, n=',num2str(p_ss(p_s_i)));
+        lt_i = lt_i +1;
+    end
+    for p_s_i = 1:N_p_s
+        hold on
+        subplot(3,2,plot_num)
+        plot(Wl_t(:,p_s_i,sc));
+        leg_txt{lt_i} = strcat('L, n=',num2str(p_ss(p_s_i)));
+        lt_i = lt_i +1;
+    end
+    hold off
+    title(strcat('Wealth (',sc_names{sc},')'))
+    plot_num = plot_num + 1;
 end
-for p_s_i = 1:N_p_s
-    hold on
-    plot(Wl_t(:,p_s_i));
-    leg_txt{lt_i} = strcat('L, p=',num2str(p_ss(p_s_i)));
-    lt_i = lt_i +1;
-end
-hold off
-legend(leg_txt)
+pw_leg = legend(leg_txt)
+new_pos = [0.95 0.5 0.01 0.01];
+new_units = 'normalized'
+set(pw_leg, 'Position', new_pos, 'Units', new_units)
 
 % delete(findall(0,'Type','figure'))
