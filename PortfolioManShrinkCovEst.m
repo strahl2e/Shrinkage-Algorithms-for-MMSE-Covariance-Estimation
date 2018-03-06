@@ -46,11 +46,13 @@ wl_t = zeros(T,N_S,N_p_s,N_sc);
 Ws_t = zeros(T+1,N_p_s,N_sc); % wealth
 Wl_t = zeros(T+1,N_p_s,N_sc);
 
+
+
 for p_s_i = 1:N_p_s
     fprintf(2,'Computing weights and wealth with p=%i \n',p_ss(p_s_i));
     %p_s = 50; %Number of previous samples
-    Ws_t(1,p_s_i,sc) = 1; % Start with 1 unit (million euros) of wealth
-    Wl_t(1,p_s_i,sc) = 1;
+    Ws_t(1,p_s_i,1:N_sc) = 1; % Start with 1 unit (million euros) of wealth
+    Wl_t(1,p_s_i,1:N_sc) = 1;
 
     for c_t = start_t:size(nrs,1)
         % Calculate relevant statistics of net returns
@@ -91,6 +93,7 @@ for p_s_i = 1:N_p_s
         % Compute weights using Expected Utility Maximization
         t = c_t - t_offset;
         for sc = 1:6
+
             samp_cov_inv = inv(S_hats(:,:,sc));
             one_tran_S = ones(N_S,1)'* samp_cov_inv;
             lambda_t = (gam - one_tran_S*current_mus) / (one_tran_S*ones(N_S,1));
