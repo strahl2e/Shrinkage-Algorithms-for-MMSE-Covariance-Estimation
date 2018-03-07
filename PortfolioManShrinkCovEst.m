@@ -30,7 +30,7 @@ for s = 1:N_S
     sds(s) = sqrt(var(nr));
 end
 
-p_ss = 2:3:50; % number of previous samples (n) to use for computing weights
+p_ss = 2:2:50; % number of previous samples (n) to use for computing weights
 N_p_s = length(p_ss);
 
 start_t = 50;
@@ -54,25 +54,29 @@ for p_s_i = 1:N_p_s
 
     for c_t = start_t:size(nrs,1)
         % Calculate relevant statistics of net returns
-        current_mus = mean(nrs(max(1,c_t-p_ss(p_s_i)):c_t,:))';
-        current_samp_cov = cov(nrs(max(1,c_t-p_ss(p_s_i)):c_t,:));
+        prev_t_range = max(2,c_t-p_ss(p_s_i)):c_t;
+        current_mus = mean(nrs(prev_t_range-1,:))';
+        %current_samp_cov = cov(nrs(max(1,c_t-p_ss(p_s_i)):c_t,:));
+        
         S_hat = zeros(N_S,N_S);
-        for j=max(1,c_t-p_ss(p_s_i)):c_t
-            S_hat = S_hat + nrs(j,:)' * nrs(j,:);
+        
+        for j=prev_t_range
+            S_hat = S_hat + nrs(j-1,:)' * nrs(j-1,:);
         end
-        S_hat = S_hat ./ length(max(1,c_t-p_ss(p_s_i)):c_t);
+        S_hat = S_hat ./ length(prev_t_range);
+        S_hat_S = S_hat ./ (length(prev_t_range) + 1);
         F_hat = (trace(S_hat) / N_S) * eye(N_S);
         
         S_hats = zeros(N_S, N_S, 6);
-        S_hats(:,:,1) = current_samp_cov;
+        S_hats(:,:,1) = S_hat_S;
         S_hats(:,:,2) = S_hat;
         S_hats(:,:,3) = F_hat;
         
         sum_sq_fro_diffs = 0;
-        for j=max(1,c_t-p_ss(p_s_i)):c_t
-            sum_sq_fro_diffs = sum_sq_fro_diffs + norm(nrs(j,:)'*nrs(j,:) - S_hat, 'fro')^2;
+        for j=prev_t_range
+            sum_sq_fro_diffs = sum_sq_fro_diffs + norm(nrs(j-1,:)'*nrs(j-1,:) - S_hat, 'fro')^2;
         end
-        n = length(max(1,c_t-p_ss(p_s_i)):c_t);
+        n = length(prev_t_range);
         rho_LW =  min(1, sum_sq_fro_diffs / (n^2*(trace(S_hat^2) - (trace(S_hat)^2/N_S))));
         rho_RBLW = min(1,(((n-2)/n) * trace(S_hat^2) + trace(S_hat)^2) / ((n+2)*(trace(S_hat^2) - (trace(S_hat)^2/N_S))));
 
@@ -91,7 +95,6 @@ for p_s_i = 1:N_p_s
         % Compute weights using Expected Utility Maximization
         t = c_t - t_offset;
         for sc = 1:6
-
             samp_cov_inv = inv(S_hats(:,:,sc));
             one_tran_S = ones(N_S,1)'* samp_cov_inv;
             lambda_t = (gam - one_tran_S*current_mus) / (one_tran_S*ones(N_S,1));
@@ -100,11 +103,23 @@ for p_s_i = 1:N_p_s
 
             % Compute wealth for next time step, units of one million.
             %mil_units = 1000000;
-            ns_t = (ws_t(t,:,p_s_i,sc).*((Ws_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; %Current short investments 
-            nl_t = (wl_t(t,:,p_s_i,sc).*((Wl_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; 
+            
+            Rs_t_p_1 = ws_t(t,:,p_s_i,sc) * nrs(c_t,:)';
+            Rl_t_p_1 = wl_t(t,:,p_s_i,sc) * nrs(c_t,:)';
+            
+            Ws_t(t+1,p_s_i,sc) = Ws_t(t,p_s_i,sc) + Ws_t(t,p_s_i,sc)*Rs_t_p_1;
+            Wl_t(t+1,p_s_i,sc) = Wl_t(t,p_s_i,sc) + Wl_t(t,p_s_i,sc)*Rl_t_p_1;
+            
+            %ns_t = (ws_t(t,:,p_s_i,sc).*((Ws_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; %Current short investments 
+            %nl_t = (wl_t(t,:,p_s_i,sc).*((Wl_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; 
 
-            Ws_t(t+1,p_s_i,sc) = (ns_t'*Cs(c_t+1,:)')/1000000; %Wealth investing in next time-step
-            Wl_t(t+1,p_s_i,sc) = (nl_t'*Cs(c_t+1,:)')/1000000;
+            %Ws_t(t+1,p_s_i,sc) = (ns_t'*Cs(c_t+1,:)')/1000000; %Wealth investing in next time-step
+            %Wl_t(t+1,p_s_i,sc) = (nl_t'*Cs(c_t+1,:)')/1000000;
+            
+            if Ws_t(t+1,p_s_i,sc) < 0
+                fprintf(2,'Wealth below 0! %i %i %i \n',t+1, p_s_i, sc);
+                Ws_t(t+1,p_s_i,sc) = NaN;
+            end
         end
     end
 end
