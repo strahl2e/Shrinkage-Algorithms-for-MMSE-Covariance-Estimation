@@ -46,8 +46,6 @@ wl_t = zeros(T,N_S,N_p_s,N_sc);
 Ws_t = zeros(T+1,N_p_s,N_sc); % wealth
 Wl_t = zeros(T+1,N_p_s,N_sc);
 
-
-
 for p_s_i = 1:N_p_s
     fprintf(2,'Computing weights and wealth with p=%i \n',p_ss(p_s_i));
     %p_s = 50; %Number of previous samples
