@@ -18,7 +18,8 @@ title('S_i_j_diffs')
 S_AR1_r_0_1 = 0.1.^S_i_j_diffs
 figure
 imagesc(S_AR1_r_0_1)
-title('S_AR1_r_0_1')
+title('S AR1 r=0.1')
+colorbar
 S_AR1_r_0_5 = 0.5.^S_i_j_diffs
 figure
 imagesc(S_AR1_r_0_5)
@@ -26,7 +27,8 @@ title('S_AR1_r_0_5')
 S_AR1_r_0_9 = 0.9.^S_i_j_diffs
 figure
 imagesc(S_AR1_r_0_9)
-title('S_AR1_r_0_9')
+title('S AR1 r=0.9')
+colorbar
 
 %% setup FBM covariance matrices
 % Note: definition in paper is wrong! 
@@ -37,7 +39,8 @@ FBM_matrix = @(h, S_i_j_diffs) 0.5*(abs(S_i_j_diffs + 1).^(2*h) - 2*(S_i_j_diffs
 S_FBM_h_0_6 = FBM_matrix(0.6, S_i_j_diffs);
 figure
 imagesc(S_FBM_h_0_6)
-title('S_FBM_h_0_6')
+title('S FBM h=0.6')
+colorbar
 
 S_FBM_h_0_7 = FBM_matrix(0.7, S_i_j_diffs);
 figure
@@ -47,7 +50,8 @@ title('S_FBM_h_0_7')
 S_FBM_h_0_8 = FBM_matrix(0.8, S_i_j_diffs);
 figure
 imagesc(S_FBM_h_0_8)
-title('S_FBM_h_0_8')
+title('S FBM h=0.8')
+colorbar
 
 %% Create samples for testing AR(1) covariance matrix
 
