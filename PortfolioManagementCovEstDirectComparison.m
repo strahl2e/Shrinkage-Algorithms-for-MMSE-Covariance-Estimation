@@ -46,6 +46,8 @@ S_M_P = cov(nrs,1);
 
 imagesc(S_S);
 imagesc(S_P);
+colorbar
+title("Covariance (1/N) for all 251 daily closing prices")
 imagesc(S_M_S);
 imagesc(S_M_P);
 
@@ -58,6 +60,7 @@ N_Sh = length(S_hat_names);
 final_ts = (p_ts(end)+1):N_t;
 N_fts = length(final_ts);
 MSEs = zeros(N_ps, N_Sh, N_fts);
+rhos = zeros(N_ps, N_Sh, N_fts);
 
 for final_t_i = 1:N_fts
     final_t = final_ts(final_t_i);
@@ -104,14 +107,25 @@ for final_t_i = 1:N_fts
         S_hats(:,:,7) = S_hat_RBLW;
         S_hats(:,:,8) = S_hat_OAS;
 
+        rhos(p_t_i, 1, final_t_i) = 0;
+        rhos(p_t_i, 2, final_t_i) = 0;
+        rhos(p_t_i, 3, final_t_i) = 0;
+        rhos(p_t_i, 4, final_t_i) = 0;
+        rhos(p_t_i, 5, final_t_i) = 1;
+        rhos(p_t_i, 6, final_t_i) = rho_LW;
+        rhos(p_t_i, 7, final_t_i) = rho_RBLW;
+        rhos(p_t_i, 8, final_t_i) = rho_OAS;
+        
         % Check MSE 
         for sh = 1:N_Sh
+            
             MSEs(p_t_i, sh, final_t_i) = norm(S_hats(:,:,sh) - S_P, 'fro')^2;
         end
     end
 end
 
 MSE_avgs = sum(MSEs,3) / N_fts;
+rho_avgs = sum(rhos,3) / N_fts;
 
 figure
 for sh = 1:N_Sh
@@ -119,6 +133,9 @@ for sh = 1:N_Sh
     plot(MSE_avgs(:,sh));
 end
 legend(S_hat_names)
+title("Avg MSEs for increasing numbers of subsamples")
+xlabel("p (#previous time-step samples)")
+ylabel("MSE (Frobenius norm)")
 
 figure
 for sh = [1 2 5 6 7 8]
@@ -126,3 +143,34 @@ for sh = [1 2 5 6 7 8]
     plot(MSE_avgs(:,sh));
 end
 legend(S_hat_names([1 2 5 6 7 8]))
+title("Avg MSEs for increasing numbers of subsamples")
+xlabel("p (#previous time-step samples)")
+ylabel("MSE (Frobenius norm)")
+set(gca,'XTick',0:5:25)
+set(gca,'XTickLabel',0:10:50)
+
+figure
+p_range = 1:3;
+for sh = [1 2 5 6 7 8]
+    hold on
+    plot(MSE_avgs(p_range,sh));
+end
+legend(S_hat_names([1 2 5 6 7 8]))
+title("Avg MSEs for increasing numbers of subsamples")
+xlabel("p (#previous time-step samples)")
+ylabel("MSE (Frobenius norm)")
+set(gca,'XTick',1:3)
+set(gca,'XTickLabel',2:2:6)
+
+figure
+for sh = [1 2 5 6 7 8]
+    hold on
+    plot(rho_avgs(p_range,sh));
+end
+legend(S_hat_names([1 2 5 6 7 8]))
+title("Avg \rho values for increasing numbers of subsamples")
+xlabel("p (#previous time-step samples)")
+ylabel("\rho (0= S hat, 1 = F hat)")
+set(gca,'XTick',1:3)
+set(gca,'XTickLabel',2:2:6)
+    
