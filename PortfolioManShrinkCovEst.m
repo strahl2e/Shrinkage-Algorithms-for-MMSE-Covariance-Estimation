@@ -46,12 +46,15 @@ wl_t = zeros(T,N_S,N_p_s,N_sc);
 Ws_t = zeros(T+1,N_p_s,N_sc); % wealth
 Wl_t = zeros(T+1,N_p_s,N_sc);
 
+Rs_ts = zeros(T+1,N_p_s,N_sc); % portfolio returns
+Rl_ts = zeros(T+1,N_p_s,N_sc); 
+
 for p_s_i = 1:N_p_s
     fprintf(2,'Computing weights and wealth with p=%i \n',p_ss(p_s_i));
     %p_s = 50; %Number of previous samples
     Ws_t(1,p_s_i,1:N_sc) = 1; % Start with 1 unit (million euros) of wealth
     Wl_t(1,p_s_i,1:N_sc) = 1;
-
+    
     for c_t = start_t:size(nrs,1)
         % Calculate relevant statistics of net returns
         prev_t_range = max(2,c_t-p_ss(p_s_i)):c_t;
@@ -104,11 +107,11 @@ for p_s_i = 1:N_p_s
             % Compute wealth for next time step, units of one million.
             %mil_units = 1000000;
             
-            Rs_t_p_1 = ws_t(t,:,p_s_i,sc) * nrs(c_t,:)';
-            Rl_t_p_1 = wl_t(t,:,p_s_i,sc) * nrs(c_t,:)';
+            Rs_ts(t+1,p_s_i,sc) = ws_t(t,:,p_s_i,sc) * nrs(c_t,:)';
+            Rl_ts(t+1,p_s_i,sc) = wl_t(t,:,p_s_i,sc) * nrs(c_t,:)';
             
-            Ws_t(t+1,p_s_i,sc) = Ws_t(t,p_s_i,sc) + Ws_t(t,p_s_i,sc)*Rs_t_p_1;
-            Wl_t(t+1,p_s_i,sc) = Wl_t(t,p_s_i,sc) + Wl_t(t,p_s_i,sc)*Rl_t_p_1;
+            Ws_t(t+1,p_s_i,sc) = Ws_t(t,p_s_i,sc) + Ws_t(t,p_s_i,sc)*Rs_ts(t+1,p_s_i,sc);
+            Wl_t(t+1,p_s_i,sc) = Wl_t(t,p_s_i,sc) + Wl_t(t,p_s_i,sc)*Rl_ts(t+1,p_s_i,sc);
             
             %ns_t = (ws_t(t,:,p_s_i,sc).*((Ws_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; %Current short investments 
             %nl_t = (wl_t(t,:,p_s_i,sc).*((Wl_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; 
@@ -155,17 +158,6 @@ set(pw_leg, 'Position', new_pos, 'Units', new_units)
 
 
 % Plot portfolio returns
-Rs_t = zeros(length(ws_t)-1,N_p_s,N_sc);
-Rl_t = zeros(length(wl_t)-1,N_p_s,N_sc);
-for sc = 1:N_sc
-    for p_s_i = 1:N_p_s
-        Rs_t(:,p_s_i,sc) = sum(ws_t(1:end-1,:,p_s_i,sc) .* nrs((start_t+1):end,:),2);
-        Rl_t(:,p_s_i,sc) = sum(wl_t(1:end-1,:,p_s_i,sc) .* nrs((start_t+1):end,:),2);
-    end
-end
-mean(Rs_t)  
-mean(Rl_t)
-
 figure
 plot_num = 1;
 for sc = 1:N_sc
@@ -174,14 +166,14 @@ for sc = 1:N_sc
     for p_s_i = 1:N_p_s
         hold on
         subplot(3,2,plot_num)
-        plot(Rs_t(:,p_s_i,sc))
+        plot(Rs_ts(:,p_s_i,sc))
         leg_txt{lt_i} = strcat('S, n=',num2str(p_ss(p_s_i)));
         lt_i = lt_i +1;
     end
     for p_s_i = 1:N_p_s
         hold on
         subplot(3,2,plot_num)
-        plot(Rl_t(:,p_s_i,sc))
+        plot(Rl_ts(:,p_s_i,sc))
         leg_txt{lt_i} = strcat('L, n=',num2str(p_ss(p_s_i)));
         lt_i = lt_i +1;
     end
