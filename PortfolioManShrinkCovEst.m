@@ -30,7 +30,7 @@ for s = 1:N_S
     sds(s) = sqrt(var(nr));
 end
 
-p_ss = 2:2:50; % number of previous samples (n) to use for computing weights
+p_ss = 2:8:50; % number of previous samples (n) to use for computing weights
 N_p_s = length(p_ss);
 
 start_t = 50;
@@ -41,19 +41,20 @@ sc_names = {'SC','PC','F','LW','FBLW','OAS'}
 N_sc = length(sc_names);
 
 ws_t = zeros(T,N_S,N_p_s,N_sc); % weights
-wl_t = zeros(T,N_S,N_p_s,N_sc);
+%wl_t = zeros(T,N_S,N_p_s,N_sc);
 
 Ws_t = zeros(T+1,N_p_s,N_sc); % wealth
-Wl_t = zeros(T+1,N_p_s,N_sc);
+%Wl_t = zeros(T+1,N_p_s,N_sc);
 
 Rs_ts = zeros(T+1,N_p_s,N_sc); % portfolio returns
-Rl_ts = zeros(T+1,N_p_s,N_sc); 
+%Rl_ts = zeros(T+1,N_p_s,N_sc); 
+
 
 for p_s_i = 1:N_p_s
     fprintf(2,'Computing weights and wealth with p=%i \n',p_ss(p_s_i));
     %p_s = 50; %Number of previous samples
     Ws_t(1,p_s_i,1:N_sc) = 1; % Start with 1 unit (million euros) of wealth
-    Wl_t(1,p_s_i,1:N_sc) = 1;
+    %Wl_t(1,p_s_i,1:N_sc) = 1;
     
     for c_t = start_t:size(nrs,1)
         % Calculate relevant statistics of net returns
@@ -102,16 +103,16 @@ for p_s_i = 1:N_p_s
             one_tran_S = ones(N_S,1)'* samp_cov_inv;
             lambda_t = (gam - one_tran_S*current_mus) / (one_tran_S*ones(N_S,1));
             ws_t(t,:,p_s_i,sc) = (1/gam)*samp_cov_inv*(current_mus + lambda_t*ones(N_S,1));
-            wl_t(t,:,p_s_i,sc) = max(min(1,ws_t(t,:,p_s_i,sc)), 0);
+            %wl_t(t,:,p_s_i,sc) = max(min(1,ws_t(t,:,p_s_i,sc)), 0);
 
             % Compute wealth for next time step, units of one million.
             %mil_units = 1000000;
             
             Rs_ts(t+1,p_s_i,sc) = ws_t(t,:,p_s_i,sc) * nrs(c_t,:)';
-            Rl_ts(t+1,p_s_i,sc) = wl_t(t,:,p_s_i,sc) * nrs(c_t,:)';
+            %Rl_ts(t+1,p_s_i,sc) = wl_t(t,:,p_s_i,sc) * nrs(c_t,:)';
             
             Ws_t(t+1,p_s_i,sc) = Ws_t(t,p_s_i,sc) + Ws_t(t,p_s_i,sc)*Rs_ts(t+1,p_s_i,sc);
-            Wl_t(t+1,p_s_i,sc) = Wl_t(t,p_s_i,sc) + Wl_t(t,p_s_i,sc)*Rl_ts(t+1,p_s_i,sc);
+            %Wl_t(t+1,p_s_i,sc) = Wl_t(t,p_s_i,sc) + Wl_t(t,p_s_i,sc)*Rl_ts(t+1,p_s_i,sc);
             
             %ns_t = (ws_t(t,:,p_s_i,sc).*((Ws_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; %Current short investments 
             %nl_t = (wl_t(t,:,p_s_i,sc).*((Wl_t(t,p_s_i,sc)*1000000) * Cs(c_t,:).^-1))'; 
@@ -131,7 +132,7 @@ end
 figure
 plot_num = 1;
 for sc = 1:N_sc
-    leg_txt = cell(length(p_ss)*2,1);
+    leg_txt = cell(length(p_ss),1);
     lt_i = 1;
     for p_s_i = 1:N_p_s
         hold on
@@ -140,13 +141,13 @@ for sc = 1:N_sc
         leg_txt{lt_i} = strcat("S, n = ", num2str(p_ss(p_s_i)));
         lt_i = lt_i + 1;
     end
-    for p_s_i = 1:N_p_s
-        hold on
-        subplot(3,2,plot_num)
-        plot(wl_t(:,1,p_s_i,sc))
-        leg_txt{lt_i} = strcat("L, n = ", num2str(p_ss(p_s_i)));
-        lt_i = lt_i + 1;
-    end
+%     for p_s_i = 1:N_p_s
+%         hold on
+%         subplot(3,2,plot_num)
+%         plot(wl_t(:,1,p_s_i,sc))
+%         leg_txt{lt_i} = strcat("L, n = ", num2str(p_ss(p_s_i)));
+%         lt_i = lt_i + 1;
+%     end
     hold off
     title(strcat('Portfolio weights',", (", sc_names{sc},")"))
     plot_num = plot_num + 1;
@@ -161,7 +162,7 @@ set(pw_leg, 'Position', new_pos, 'Units', new_units)
 figure
 plot_num = 1;
 for sc = 1:N_sc
-    leg_txt = cell(length(p_ss)*2,1);
+    leg_txt = cell(length(p_ss),1);
     lt_i = 1;
     for p_s_i = 1:N_p_s
         hold on
@@ -170,13 +171,13 @@ for sc = 1:N_sc
         leg_txt{lt_i} = strcat('S, n=',num2str(p_ss(p_s_i)));
         lt_i = lt_i +1;
     end
-    for p_s_i = 1:N_p_s
-        hold on
-        subplot(3,2,plot_num)
-        plot(Rl_ts(:,p_s_i,sc))
-        leg_txt{lt_i} = strcat('L, n=',num2str(p_ss(p_s_i)));
-        lt_i = lt_i +1;
-    end
+%     for p_s_i = 1:N_p_s
+%         hold on
+%         subplot(3,2,plot_num)
+%         plot(Rl_ts(:,p_s_i,sc))
+%         leg_txt{lt_i} = strcat('L, n=',num2str(p_ss(p_s_i)));
+%         lt_i = lt_i +1;
+%     end
     hold off
     title(strcat('Net returns (',sc_names{sc},')'))
     plot_num = plot_num + 1;
@@ -192,7 +193,7 @@ set(pw_leg, 'Position', new_pos, 'Units', new_units)
 fig=figure;
 plot_num = 1;
 for sc = 1:N_sc
-    leg_txt = cell(length(p_ss)*2,1);
+    leg_txt = cell(length(p_ss),1);
     lt_i = 1;
     for p_s_i = 1:N_p_s
         hold on
@@ -201,13 +202,13 @@ for sc = 1:N_sc
         leg_txt{lt_i} = strcat('S, n=',num2str(p_ss(p_s_i)));
         lt_i = lt_i +1;
     end
-    for p_s_i = 1:N_p_s
-        hold on
-        subplot(3,2,plot_num)
-        plot(Wl_t(:,p_s_i,sc));
-        leg_txt{lt_i} = strcat('L, n=',num2str(p_ss(p_s_i)));
-        lt_i = lt_i +1;
-    end
+%     for p_s_i = 1:N_p_s
+%         hold on
+%         subplot(3,2,plot_num)
+%         plot(Wl_t(:,p_s_i,sc));
+%         leg_txt{lt_i} = strcat('L, n=',num2str(p_ss(p_s_i)));
+%         lt_i = lt_i +1;
+%     end
     hold off
     title(strcat('Wealth (',sc_names{sc},')'))
     plot_num = plot_num + 1;
