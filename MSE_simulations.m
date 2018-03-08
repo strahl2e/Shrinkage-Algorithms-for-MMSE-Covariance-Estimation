@@ -125,10 +125,10 @@ for tst_mat_i = 1:length(tst_cov_mats)
             S_hat_Ora = (1-rho_Ora)*S_hat + rho_Ora * F_hat;
 
             % Record MSEs
-            sum_MSEs_LW = sum_MSEs_LW + norm(S_hat_LW - S_AR1_r_0_1, 'fro')^2;
-            sum_MSEs_RBLW = sum_MSEs_RBLW + norm(S_hat_RBLW - S_AR1_r_0_1, 'fro')^2;
-            sum_MSEs_OAS = sum_MSEs_OAS + norm(S_hat_OAS - S_AR1_r_0_1, 'fro')^2;
-            sum_MSEs_Ora = sum_MSEs_Ora + norm(S_hat_Ora - S_AR1_r_0_1, 'fro')^2;
+            sum_MSEs_LW = sum_MSEs_LW + norm(S_hat_LW - TrueCov, 'fro')^2;
+            sum_MSEs_RBLW = sum_MSEs_RBLW + norm(S_hat_RBLW - TrueCov, 'fro')^2;
+            sum_MSEs_OAS = sum_MSEs_OAS + norm(S_hat_OAS - TrueCov, 'fro')^2;
+            sum_MSEs_Ora = sum_MSEs_Ora + norm(S_hat_Ora - TrueCov, 'fro')^2;
 
             % Track rho values
             sum_rhos_LW = sum_rhos_LW + rho_LW;
