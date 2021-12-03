@@ -1,4 +1,6 @@
-Part of my coursework for Advanced Topics in Statistical Learning Khaoula El Mekkaoui (https://github.com/Mekkhaoula) and I wrote this MATLAB code to replicate the experiments in a research paper on covariance (shinkage) estimation and to test the methods on real stock-market data - predictions were pretty good, but I'm unfortunately not yet a millionare, so wasn't quite that good :)
+As part of the coursework for Advanced Topics in Statistical Learning, Khaoula El Mekkaoui (https://github.com/Mekkhaoula) and I wrote this MATLAB code to replicate the experiments in a research paper on covariance (shinkage) estimation and to test the methods on real stock-market data - predictions were pretty good, but we're unfortunately not yet millionares, so wasn't quite that good :)
+
+Prof. Esa Ollila used this work as a demo in future lectures, so it was quite good. :)
 
 Experiments based on the paper Chen Y., Wiesel A., Eldar Y., Hero A.. Shrinkage Algorithms for MMSE Covariance Estimation. IEEE Transactions on Signal Processing, 2010.
 
