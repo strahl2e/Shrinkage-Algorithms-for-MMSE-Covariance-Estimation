@@ -9,6 +9,3 @@ The MATLAB files above include several stand-alone scripts for the experiments:
  - MSE_simulations.m - The mean-square error (MSE) simulations for covariance estimation from the paper.
 
  - PortfolioManShrinkCovEst.m - Applying methods to stock portfolio management, where investments can be balanced based on negative correlation estimates to reduce risk.
-
-
-Application to financial portfolio managament as an example of the utility of these algorithms in a real-world setting.
